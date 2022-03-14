@@ -7,7 +7,7 @@ app.get('/', (req, res) => {
     let student = req.query.student;
 
     // Array con los estudiantes
-    let students = ["Student1", "Student2"];
+    let students = ["hola mundo", "Student2"];
 
     // Respuesta base
     let page = '<label>Buscador de Alumnos</label><input type="text" id="student"></input><input type="button" onclick="checkStudent()" value="Buscar"></input>';

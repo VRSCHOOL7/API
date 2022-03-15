@@ -69,10 +69,11 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/login', (req, res) => {
+
   var username = req.query.username;
   var password = req.query.password;
+  console.log("aqui");
   var result;
-  res.send(username);
   users.findOne({ "name": username, "password": password},  (error, query) => {
     if(error) {
         return res.status(500).send(error);

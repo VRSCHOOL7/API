@@ -8,7 +8,7 @@ const MongoClient = require("mongodb").MongoClient;
 const ObjectId = require("mongodb").ObjectID;
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8000;
 const database_url = process.env.DATABASE_URL;
 
 var database, courses, users;
@@ -16,11 +16,11 @@ var database, courses, users;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
+// app.use(function(req, res, next) {
+//   res.header("Access-Control-Allow-Origin", "*");
+//   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//   next();
+// });
 
 app.listen(port, () => {
   console.log(database_url);

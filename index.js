@@ -69,17 +69,16 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/login', (req, res) => {
-
-  var username = req.body.username;
-  var password = req.body.password;
+  var username = req.query.username;
+  var password = req.query.password;
   var result;
-
+  res.send(username);
   users.findOne({ "name": username, "password": password},  (error, query) => {
     if(error) {
         return res.status(500).send(error);
     }
     if (query==null) {
-      result = {status : "ERROR", message : "User not found", session_token : "" };
+      result = {status : "ERROR", message : "user "+username   + "pass " + password, session_token : "" };
     }else{
       var token = get_token(query);
       result = {status : "OK", message : "Correct authentication", session_token : token }

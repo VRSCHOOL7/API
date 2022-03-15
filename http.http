@@ -1,1 +1,1 @@
-curl -X GET  http://localhost:5000/api/login  -H "Content-Type: application/json" -d '{"session_token": "6fa04138b54b65c806718d80b3560571" }'
+curl -X GET  http://localhost:5000/api/login  -H "Content-Type: application/json" -d '{"username":"Marc", "password": "marc" }'

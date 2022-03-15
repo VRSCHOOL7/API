@@ -16,6 +16,12 @@ var database, courses, users;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 app.listen(port, () => {
   console.log(database_url);
   MongoClient.connect(database_url, { useNewUrlParser: true }, (error, client) => {
@@ -75,24 +81,30 @@ app.get('/api/login', (req, res) => {
     if (query==null) {
       result = {status : "ERROR", message : "User not found", session_token : "" };
     }else{
-
       var token = get_token(query);
-      
-      
-
-      console.log(token);
+      result = {status : "OK", message : "Correct authentication", session_token : token }
     } 
-
     res.send(result);
   });
 });
 
 app.get('/api/logout', (req, res) => {
-  
+  var token = req.body.session_token, result;
+  users.findOne({ "token": token},  (error, query) => {
+    if(error) {
+        return res.status(500).send(error);
+    }
+    if (query==null) {
+      result = {status : "ERROR", message : "User not found", session_token : "" };
+    }else{
+      result = {status : "OK", message : "Session successfully closed", session_token : token }
+    }
+    res.send(result);
+  });
 });
 
 app.get('/api/get_course', (req, res) => {
-
+  var token = req.body.session_token, result;
 });
 
 app.get('/api/get_course_details', (req, res) => {
@@ -100,14 +112,17 @@ app.get('/api/get_course_details', (req, res) => {
 });
 
 function get_token(user) {
-  if (user.token == ''){
-    var newvalues = { $set: {token: "12345678" } };
+  if (user.token != ''){
+    if (Date.now() < user.expiration_time.getTime()) {
+      return user.token;
+    }
+  }
+    var random =Math.floor(Math.random() * 1000);
+    var new_token = crypto.createHash('md5').update(user.name + user.password + random).digest('hex');
+    var expiration_time = new Date(parseInt(Date.now()) + parseInt(process.env.TOKEN_EXPIRATION_TIME));
+    var newvalues = { $set: {token: new_token, expiration_time: expiration_time } };
     users.updateOne(user, newvalues, function(err, res) {
       if (err) throw err;
-      console.log("1 document updated");
     });
-    return crypto.createHash('md5').update(user.name + user.password).digest('hex');
-
-  }
-
+    return new_token;
 }

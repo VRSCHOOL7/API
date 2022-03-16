@@ -65,9 +65,9 @@ app.get('/api/logout', (req, res) => {
       return res.status(500).send(error);
     }
     if (query == null) {
-      result = { status: "ERROR", message: "User not found", session_token: "" };
+      result = { status: "ERROR", message: "Session_token is required"};
     } else {
-      result = { status: "OK", message: "Session successfully closed", session_token: token }
+      result = { status: "OK", message: "Session successfully closed"}
     }
     res.send(result);
   });
@@ -80,20 +80,20 @@ app.get('/api/get_course', (req, res) => {
       return res.status(500).send(error);
     }
     if (user == null) {
-      result = { status: "ERROR", message: "session_token is required" };
+      res.send({ status: "ERROR", message: "session_token is required" });
     } else {
       if (Date.now() < user.expiration_time.getTime()) {
         courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "title": 1, "description": 1 }).toArray((error, course_list) => {
           if (error) {
             return res.status(500).send(error);
           }
-          result = { status: "OK", message: "Correct authentication", course_list: course_list }
+          res.send({ status: "OK", message: "Correct authentication", course_list: course_list });
         });
       } else {
-        result = { status: "ERROR", message: "Token expired" }
+        res.send({ status: "ERROR", message: "Token expired" });
       }
     }
-    res.send(result);
+    
   });
 });
 

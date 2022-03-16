@@ -93,7 +93,6 @@ app.get('/api/get_course', (req, res) => {
         res.send({ status: "ERROR", message: "Token expired" });
       }
     }
-    
   });
 });
 

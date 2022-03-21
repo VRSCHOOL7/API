@@ -83,7 +83,7 @@ app.get('/api/get_course', (req, res) => {
       res.send({ status: "ERROR", message: "session_token is required" });
     } else {
       if (Date.now() < user.expiration_time.getTime()) {
-        courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "title": 1, "description": 1, "subsc" }).toArray((error, course_list) => {
+        courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "title": 1, "description": 1}).toArray((error, course_list) => {
           if (error) {
             return res.status(500).send(error);
           }

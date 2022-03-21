@@ -65,9 +65,9 @@ app.get('/api/logout', (req, res) => {
       return res.status(500).send(error);
     }
     if (query == null) {
-      result = { status: "ERROR", message: "Session_token is required"};
+      result = { status: "ERROR", message: "Session_token is required" };
     } else {
-      result = { status: "OK", message: "Session successfully closed"}
+      result = { status: "OK", message: "Session successfully closed" }
     }
     res.send(result);
   });
@@ -83,7 +83,7 @@ app.get('/api/get_course', (req, res) => {
       res.send({ status: "ERROR", message: "session_token is required" });
     } else {
       if (Date.now() < user.expiration_time.getTime()) {
-        courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "title": 1, "description": 1 }).toArray((error, course_list) => {
+        courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "title": 1, "description": 1, "subsc" }).toArray((error, course_list) => {
           if (error) {
             return res.status(500).send(error);
           }
@@ -120,6 +120,26 @@ app.get('/api/get_course_details', (req, res) => {
       } else {
         res.send({ status: "ERROR", message: "Token expired" });
       }
+    }
+  });
+});
+
+app.get('/api/export_database', (req, res) => {
+  var username = req.query.username;
+  var password = req.query.password;
+  users.findOne({ "name": username, "password": password }, (error, query) => {
+    if (error) {
+      return res.status(500).send(error);
+    }
+    if (query == null) {
+      res.send({ status: "ERROR", message: "User not found" });
+    } else {
+      courses.find().toArray((error, course_list) => {
+        if (error) {
+          return res.status(500).send(error);
+        }
+        res.send({ status: "OK", message: "Correct authentication", course_list: course_list });
+      });
     }
   });
 });

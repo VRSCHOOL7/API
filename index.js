@@ -159,3 +159,45 @@ function get_token(user) {
   });
   return new_token;
 }
+
+// app.get('/api/get_teachers', (req, res) => {
+//   var token = req.query.session_token, result;
+//   users.findOne({ "token": token }, (error, user) => {
+//     if (error) {
+//       return res.status(500).send(error);
+//     }
+//     if (user == null) {
+//       res.send({ status: "ERROR", message: "sessiontoken is required" });
+//     } else {
+//       if (Date.now() < user.expiration_time.getTime()) {
+
+//         courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "subscribers.teachers":1}).toArray((error, course_list) => {
+
+//         });
+
+
+
+
+//         courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "title": 1, "description": 1, "subscribers.teachers":1}).toArray((error, course_list) => {
+//           if (error) {
+//             return res.status(500).send(error);
+//           }
+         
+//           res.send({ status: "OK", message: "Correct authentication", course_list: course_list, teachers: get_teachers(course_list[0].subscribers.teachers) });
+//         });
+//       } else {
+//         res.send({ status: "ERROR", message: "Token expired" });
+//       }
+//     }
+//   });
+// });
+
+// function get_teachers(teachers) {
+
+//     users.find({"id":{ $in: teachers }}).project({ "_id":0, "name":1}).toArray((error, teacher_names) => {
+//       if (error) {
+//         return res.status(500).send(error);
+//       }
+//       return teacher_names;
+//     });
+// }

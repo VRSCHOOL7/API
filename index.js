@@ -90,7 +90,8 @@ app.get('/api/get_course', (req, res) => {
           res.send({ status: "OK", message: "Correct authentication", course_list: course_list });
         });
       } else {
-        res.send({ status: "ERROR", message: "Token expired" });
+        var new_token = get_token(user);
+        result = { status: "OK", message: "Correct authentication", session_token: new_token }
       }
     }
   });
@@ -118,7 +119,8 @@ app.get('/api/get_course_details', (req, res) => {
           }
         });
       } else {
-        res.send({ status: "ERROR", message: "Token expired" });
+        var new_token = get_token(user);
+        result = { status: "OK", message: "Correct authentication", session_token: new_token }
       }
     }
   });
@@ -143,6 +145,36 @@ app.get('/api/export_database', (req, res) => {
     }
   });
 });
+
+
+app.get('/api/pin_request', (req, res) => {
+  var token = req.query.session_token, result;
+  users.findOne({ "token": token }, (error, user) => {
+    if (error) {
+      return res.status(500).send(error);
+    }
+    if (user == null) {
+      res.send({ status: "ERROR", message: "session_token is required" });
+    } else {
+      if (Date.now() < user.expiration_time.getTime()) {
+        courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "title": 1, "description": 1}).toArray((error, course_list) => {
+          if (error) {
+            return res.status(500).send(error);
+          }
+          res.send({ status: "OK", message: "Correct authentication", course_list: course_list });
+        });
+      } else {
+        res.send({ status: "ERROR", message: "Token expired" });
+      }
+    }
+  });
+});
+
+
+
+
+
+
 
 function get_token(user) {
   if (user.token != '') {

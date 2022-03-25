@@ -175,7 +175,7 @@ app.get('/api/pin_request', (req, res) => {
           }
         });
       } else {
-        result = { status: "ERROR", message: "Session_token has expired" };
+        res.send({ status: "ERROR", message: "Session_token has expired" });
         // var new_token = get_token(user);
         // res.send({ status: "OK", message: "Correct authentication", session_token: new_token });
       }

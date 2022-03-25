@@ -31,6 +31,7 @@ app.listen(port, () => {
     database = client.db("VRSCHOOL7");
     courses = database.collection("Courses");
     users = database.collection("Users");
+    pins = database.collection("Pin");
     console.log("Connected to `VRSCHOOL7`!");
   });
 });
@@ -74,7 +75,7 @@ app.get('/api/logout', (req, res) => {
 });
 
 app.get('/api/get_course', (req, res) => {
-  var token = req.query.session_token, result;
+  var token = req.query.session_token;
   users.findOne({ "token": token }, (error, user) => {
     if (error) {
       return res.status(500).send(error);
@@ -90,8 +91,9 @@ app.get('/api/get_course', (req, res) => {
           res.send({ status: "OK", message: "Correct authentication", course_list: course_list });
         });
       } else {
-        var new_token = get_token(user);
-        result = { status: "OK", message: "Correct authentication", session_token: new_token }
+        result = { status: "ERROR", message: "Session_token has expired" };
+        // var new_token = get_token(user);
+        // res.send({ status: "OK", message: "Correct authentication", session_token: new_token });
       }
     }
   });
@@ -99,7 +101,6 @@ app.get('/api/get_course', (req, res) => {
 
 app.get('/api/get_course_details', (req, res) => {
   var token = req.query.session_token, courseID = req.query.courseID;
-  var result;
   users.findOne({ "token": token }, (error, user) => {
     if (error) {
       return res.status(500).send(error);
@@ -119,8 +120,9 @@ app.get('/api/get_course_details', (req, res) => {
           }
         });
       } else {
-        var new_token = get_token(user);
-        result = { status: "OK", message: "Correct authentication", session_token: new_token }
+        result = { status: "ERROR", message: "Session_token has expired" };
+        // var new_token = get_token(user);
+        // res.send({ status: "OK", message: "Correct authentication", session_token: new_token });
       }
     }
   });
@@ -148,7 +150,7 @@ app.get('/api/export_database', (req, res) => {
 
 
 app.get('/api/pin_request', (req, res) => {
-  var token = req.query.session_token, result;
+  var token = req.query.session_token, VRtaskID = req.query.VRtaskID;
   users.findOne({ "token": token }, (error, user) => {
     if (error) {
       return res.status(500).send(error);
@@ -157,14 +159,25 @@ app.get('/api/pin_request', (req, res) => {
       res.send({ status: "ERROR", message: "session_token is required" });
     } else {
       if (Date.now() < user.expiration_time.getTime()) {
-        courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "title": 1, "description": 1}).toArray((error, course_list) => {
+        courses.findOne({ "vr_tasks.ID": 15 }, (error, course) => {
           if (error) {
             return res.status(500).send(error);
           }
-          res.send({ status: "OK", message: "Correct authentication", course_list: course_list });
+          if (course == null) {
+            res.send({ status: "ERROR", message: "VRtaskID is required" });
+          }else{
+            var pin = get_pin();
+            var pin_user_vrtask = { pin: pin, username: user.name, vr_taskID: VRtaskID };
+            pins.insertOne(pin_user_vrtask, function(err, res) {
+              if (err) throw err;
+            });
+            res.send({ status: "OK", message: "Correct authentication", PIN: pin });
+          }
         });
       } else {
-        res.send({ status: "ERROR", message: "Token expired" });
+        result = { status: "ERROR", message: "Session_token has expired" };
+        // var new_token = get_token(user);
+        // res.send({ status: "OK", message: "Correct authentication", session_token: new_token });
       }
     }
   });
@@ -190,46 +203,28 @@ function get_token(user) {
     if (err) throw err;
   });
   return new_token;
-}
+};
 
-// app.get('/api/get_teachers', (req, res) => {
-//   var token = req.query.session_token, result;
-//   users.findOne({ "token": token }, (error, user) => {
-//     if (error) {
-//       return res.status(500).send(error);
-//     }
-//     if (user == null) {
-//       res.send({ status: "ERROR", message: "sessiontoken is required" });
-//     } else {
-//       if (Date.now() < user.expiration_time.getTime()) {
+function get_pin() {
+  pin_repeated = true;
+  while (pin_repeated) {
+    var pin = create_pin();
+    pins.findOne({ "pin": pin}, (error, query) => {
+      if (error) {
+        return res.status(500).send(error);
+      }
+      if (query == null) {
+        pin_repeated = false;
+        return pin;
+      }
+    });
+  }
+};
 
-//         courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "subscribers.teachers":1}).toArray((error, course_list) => {
-
-//         });
-
-
-
-
-//         courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "title": 1, "description": 1, "subscribers.teachers":1}).toArray((error, course_list) => {
-//           if (error) {
-//             return res.status(500).send(error);
-//           }
-         
-//           res.send({ status: "OK", message: "Correct authentication", course_list: course_list, teachers: get_teachers(course_list[0].subscribers.teachers) });
-//         });
-//       } else {
-//         res.send({ status: "ERROR", message: "Token expired" });
-//       }
-//     }
-//   });
-// });
-
-// function get_teachers(teachers) {
-
-//     users.find({"id":{ $in: teachers }}).project({ "_id":0, "name":1}).toArray((error, teacher_names) => {
-//       if (error) {
-//         return res.status(500).send(error);
-//       }
-//       return teacher_names;
-//     });
-// }
+function create_pin() {
+  var pin = "";
+  for (let index = 0; index < 4; index++) {
+    pin += Math.floor(Math.random() * 10);
+  }
+  return pin;
+};

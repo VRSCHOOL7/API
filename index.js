@@ -219,8 +219,11 @@ app.post('/api/finish_vr_exercise',  (req, res) => {
         var result = {};
         result.studentID = user.id;
         result.position_data = {data:"...to be decided..."};
-        result.autograde = autograde;
-        result.exerciseVersionID = exerciseVersion;
+        result.autograde.failed_items = parseInt(autograde.failed_items);
+        result.autograde.passed_items = parseInt(autograde.passed_items);
+        result.autograde.score = parseInt(autograde.score);
+        result.autograde.comments = autograde.comments;
+        result.exerciseVersionID = parseInt(exerciseVersion);
         console.log(data.VRtaskID)
         courses.updateOne({ "vr_tasks.ID": data.VRtaskID },{ $push: { "vr_tasks.$.completions": result }}, function (error, course)  {
           if (error) {

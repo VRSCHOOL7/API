@@ -11,7 +11,7 @@ const app = express();
 const port = process.env.PORT || 8000;
 const database_url = process.env.DATABASE_URL;
 
-var database, courses, users;
+var database, courses, users, pins;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -148,9 +148,9 @@ app.get('/api/export_database', (req, res) => {
   });
 });
 
-
-app.get('/api/pin_request', (req, res) => {
-  var token = req.query.session_token, VRtaskID = req.query.VRtaskID;
+app.get('/api/pin_request',  (req, res) => {
+  var token = req.query.session_token; 
+  var VRtaskID = parseInt(req.query.VRtaskID);
   users.findOne({ "token": token }, (error, user) => {
     if (error) {
       return res.status(500).send(error);
@@ -159,19 +159,14 @@ app.get('/api/pin_request', (req, res) => {
       res.send({ status: "ERROR", message: "session_token is required" });
     } else {
       if (Date.now() < user.expiration_time.getTime()) {
-        courses.findOne({ "vr_tasks.ID": 15 }, (error, course) => {
+        courses.findOne({ "vr_tasks.ID": VRtaskID }, (error, course) => {
           if (error) {
             return res.status(500).send(error);
           }
           if (course == null) {
             res.send({ status: "ERROR", message: "VRtaskID is required" });
           }else{
-            var pin = get_pin();
-            var pin_user_vrtask = { pin: pin, username: user.name, vr_taskID: VRtaskID };
-            pins.insertOne(pin_user_vrtask, function(err, res) {
-              if (err) throw err;
-            });
-            res.send({ status: "OK", message: "Correct authentication", PIN: pin });
+            get_pin(VRtaskID, user).then(val => { res.send({ status: "OK", message: "Correct authentication", PIN: val });});
           }
         });
       } else {
@@ -184,6 +179,59 @@ app.get('/api/pin_request', (req, res) => {
 });
 
 
+app.get('/api/start_vr_exercise',  (req, res) => {
+  var pin = req.query.PIN; 
+  pins.findOne({ "pin": pin }, (error, data) => {
+    if (error) {
+      return res.status(500).send(error);
+    }
+    if (data == null) {
+      res.send({ status: "ERROR", message: "PIN is required" });
+    } else {
+      courses.findOne({ "vr_tasks.ID": data.VRtaskID },{projection: {"vr_tasks.$": true}}, (error, course) => {
+        if (error) {
+          return res.status(500).send(error);
+        }
+        if (course == null) {
+          res.send({ status: "ERROR", message: "VRtask not found" });
+        }else{
+          res.send({ status: "OK", message: "Correct authentication", username : data.username, VRexerciseID: course.vr_tasks[0].VRexID });
+        }
+      });
+    }
+  });
+});
+
+app.post('/api/finish_vr_exercise',  (req, res) => {
+  var pin = req.body.PIN; 
+  var autograde = req.body.autograde; 
+  var exerciseVersion = req.body.exerciseVersion; 
+  var VRexerciseID = req.body.VRexerciseID; 
+  var performance_data = req.body.performance_data;
+  pins.findOne({ "pin": pin }, (error, data) => {
+    if (error) {
+      return res.status(500).send(error);
+    }
+    if (data == null) {
+      res.send({ status: "ERROR", message: "PIN is required" });
+    } else {
+      users.findOne({ "name": data.username }, (error, user) => {
+        var result = {};
+        result.studentID = user.id;
+        result.position_data = {data:"...to be decided..."};
+        result.autograde = autograde;
+        result.exerciseVersionID = exerciseVersion;
+        console.log(data.VRtaskID)
+        courses.updateOne({ "vr_tasks.ID": data.VRtaskID },{ $push: { "vr_tasks.$.completions": result }}, function (error, course)  {
+          if (error) {
+            return res.status(500).send(error);
+          }
+            res.send({ status: "OK", message: "Exercise data successfully stored."});
+        });
+      }); 
+    }
+  });
+});
 
 
 
@@ -205,20 +253,27 @@ function get_token(user) {
   return new_token;
 };
 
-function get_pin() {
-  pin_repeated = true;
-  while (pin_repeated) {
-    var pin = create_pin();
-    pins.findOne({ "pin": pin}, (error, query) => {
-      if (error) {
-        return res.status(500).send(error);
-      }
+async function get_pin(VRtaskID, user) {
+  var query;
+  var pin = "";
+  query = await pins.findOne({"username": user.name, "VRtaskID":VRtaskID});
+  if (query == null) {
+    var pin_repeated = true;
+    do {
+      pin = create_pin();
+      query = await pins.findOne({ "pin": pin})
       if (query == null) {
         pin_repeated = false;
-        return pin;
       }
-    });
+    }while (pin_repeated);
+    var pin_user_vrtask = { "pin": pin, "username": user.name, "VRtaskID": VRtaskID };
+    pins.insertOne(pin_user_vrtask, function(err, res) {
+      if (err) throw err;
+          });
+  }else{
+    pin = query.pin;
   }
+   return pin;
 };
 
 function create_pin() {

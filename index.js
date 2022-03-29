@@ -205,9 +205,13 @@ app.get('/api/start_vr_exercise',  (req, res) => {
 app.post('/api/finish_vr_exercise',  (req, res) => {
   var pin = req.body.PIN; 
   var autograde = req.body.autograde; 
-  var exerciseVersion = req.body.exerciseVersionID; 
+  var exerciseVersion = req.body.exerciseVersion; 
   var VRexerciseID = req.body.VRexerciseID; 
   var performance_data = req.body.performance_data;
+  autograde.failed_items = parseInt(autograde.failed_items);
+  autograde.passed_items = parseInt(autograde.passed_items);
+  autograde.score = parseInt(autograde.score);
+  autograde.comments = autograde.comments;
   pins.findOne({ "pin": pin }, (error, data) => {
     if (error) {
       return res.status(500).send(error);
@@ -219,11 +223,8 @@ app.post('/api/finish_vr_exercise',  (req, res) => {
         var result = {};
         result.studentID = user.id;
         result.position_data = {data:"...to be decided..."};
-        result.autograde.failed_items = parseInt(autograde.failed_items);
-        result.autograde.passed_items = parseInt(autograde.passed_items);
-        result.autograde.score = parseInt(autograde.score);
-        result.autograde.comments = autograde.comments;
-        result.exerciseVersionID = parseInt(exerciseVersion);
+        result.autograde = autograde;
+        result.exerciseVersionID = exerciseVersion;
         console.log(data.VRtaskID)
         courses.updateOne({ "vr_tasks.ID": data.VRtaskID },{ $push: { "vr_tasks.$.completions": result }}, function (error, course)  {
           if (error) {

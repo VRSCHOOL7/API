@@ -84,11 +84,11 @@ app.get('/api/get_course', (req, res) => {
       res.send({ status: "ERROR", message: "session_token is required" });
     } else {
       if (Date.now() < user.expiration_time.getTime()) {
-        courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "title": 1, "description": 1}).toArray((error, course_list) => {
+        courses.find({ $or: [{ "subscribers.students": user.id }, { "subscribers.teachers": user.id }] }).project({ "title": 1, "description": 1, "subscribers.teachers" : 1}).toArray((error, course_list) => {
           if (error) {
             return res.status(500).send(error);
           }
-          res.send({ status: "OK", message: "Correct authentication", course_list: course_list });
+          res.send({ status: "OK", message: "Course list", course_list: course_list });
         });
       } else {
         result = { status: "ERROR", message: "Session_token has expired" };
@@ -233,7 +233,45 @@ app.post('/api/finish_vr_exercise',  (req, res) => {
   });
 });
 
+// async function get_modified_course_list(course_list){
+//   var new_course_list = [];
+//   for (var j = 0; j < course_list.length; j++) {
+//     get_teachers_names(course.subscribers.teachers).then(val => {
+//       var course = {title : course_list[j].title, description : course_list[j].description, teachers : val};
+//       new_course_list.push(course);
+//     });
+//   }
+//   return course_list;
+// }
 
+// async function get_teachers_names(course_list) {
+//   var new_course_list = course_list.map( async function(course) {
+//       var teachers_names = [];
+//       var teachers = await users.find({ "id": { $in: course.subscribers.teachers } }).toArray();
+//       if (teachers == null) {
+//         console.log("Users not found");
+//       } else {
+//         for (var i = 0; i < teachers.length; i++) {
+//           teachers_names.push(teachers[i].name);
+//         }
+//         course.subscribers.teachers = teachers_names;
+//       }
+//     });
+//     return new_course_list;
+  // for (let j = 0; j < course_list.length; j++) {
+  //   var teachers_names = [];
+  //   var teachers = await users.find({ "id": { $in: course_list[j].subscribers.teachers } }).toArray();
+  //   if (teachers == null) {
+  //     console.log("Users not found");
+  //   } else {
+  //     for (var i = 0; i < teachers.length; i++) {
+  //       teachers_names.push(teachers[i].name);
+  //     }
+
+  //   }
+  // }
+  // return new_course_list;
+// };
 
 
 

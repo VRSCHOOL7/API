@@ -116,6 +116,16 @@ app.get('/api/get_course_details', (req, res) => {
           if (course == null) {
             res.send({ status: "ERROR", message: "Insufficient permissions" });
           } else {
+            for (let i = 0; i < course.vr_tasks.length; i++) {
+              var completions_filtered = [];
+              for (let j = 0; j < course.vr_tasks[i].completions.length; j++) {
+                if (course.vr_tasks[i].completions[j].studentID == user.id) {
+                  completions_filtered.push(course.vr_tasks[i].completions[j]);
+                }
+              }
+              course.vr_tasks[i].completions = completions_filtered;
+
+            }
             res.send({ status: "OK", message: "Correct authentication", course: course });
           }
         });

@@ -125,6 +125,15 @@ app.get('/api/get_course_details', (req, res) => {
               }
               course.vr_tasks[i].completions = completions_filtered;
             }
+            for (let i = 0; i < course.tasks.length; i++) {
+              var uploads_filtered = [];
+              for (let j = 0; j < course.tasks[i].uploads.length; j++) {
+                if (course.tasks[i].uploads[j].studentID == user.id) {
+                  uploads_filtered.push(course.tasks[i].uploads[j]);
+                }
+              }
+              course.tasks[i].uploads = uploads_filtered;
+            }
             res.send({ status: "OK", message: "Correct authentication", course: course });
           }
         });

@@ -124,7 +124,6 @@ app.get('/api/get_course_details', (req, res) => {
                 }
               }
               course.vr_tasks[i].completions = completions_filtered;
-
             }
             res.send({ status: "OK", message: "Correct authentication", course: course });
           }
@@ -235,12 +234,13 @@ app.post('/api/finish_vr_exercise',  (req, res) => {
         result.position_data = {data:"...to be decided..."};
         result.autograde = autograde;
         result.exerciseVersionID = parseInt(exerciseVersion);
-        console.log(data.VRtaskID)
         courses.updateOne({ "vr_tasks.ID": data.VRtaskID },{ $push: { "vr_tasks.$.completions": result }}, function (error, course)  {
           if (error) {
             return res.status(500).send(error);
           }
+          pins.deleteOne({ "pin": pin }, (error, data) => {
             res.send({ status: "OK", message: "Exercise data successfully stored."});
+          });
         });
       }); 
     }

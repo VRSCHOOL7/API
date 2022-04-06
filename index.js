@@ -15,13 +15,13 @@ var database, courses, users, pins;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
 
+//create the variables for the database
 app.listen(port, () => {
   console.log(database_url);
   MongoClient.connect(database_url, { useNewUrlParser: true }, (error, client) => {
@@ -40,6 +40,7 @@ app.get('/', (req, res) => {
 
 });
 
+//EndPoint for the login, gets name and password, validates and returns the token
 app.get('/api/login', (req, res) => {
 
   var username = req.query.username;
@@ -59,6 +60,8 @@ app.get('/api/login', (req, res) => {
   });
 });
 
+
+//EndPoint for the close of the session, gets the token and validates it
 app.get('/api/logout', (req, res) => {
   var token = req.query.session_token, result;
   users.findOne({ "token": token }, (error, query) => {
@@ -74,6 +77,8 @@ app.get('/api/logout', (req, res) => {
   });
 });
 
+
+//EndPoint to the get all the corses that the user has access to
 app.get('/api/get_course', (req, res) => {
   var token = req.query.session_token;
   users.findOne({ "token": token }, (error, user) => {
@@ -99,6 +104,7 @@ app.get('/api/get_course', (req, res) => {
   });
 });
 
+//EndPoint to get all the information about one course, also filters complete exercises per user
 app.get('/api/get_course_details', (req, res) => {
   var token = req.query.session_token, courseID = req.query.courseID;
   users.findOne({ "token": token }, (error, user) => {
@@ -146,6 +152,7 @@ app.get('/api/get_course_details', (req, res) => {
   });
 });
 
+//EndPoint to get all the information about all the courses
 app.get('/api/export_database', (req, res) => {
   var username = req.query.username;
   var password = req.query.password;
@@ -166,6 +173,8 @@ app.get('/api/export_database', (req, res) => {
   });
 });
 
+
+//EndPoint to get the Pin for user to access the VR exercise
 app.get('/api/pin_request',  (req, res) => {
   var token = req.query.session_token; 
   var VRtaskID = parseInt(req.query.VRtaskID);
@@ -196,7 +205,7 @@ app.get('/api/pin_request',  (req, res) => {
   });
 });
 
-
+//EndPoint to get the information per pin
 app.get('/api/start_vr_exercise',  (req, res) => {
   var pin = req.query.PIN; 
   pins.findOne({ "pin": pin }, (error, data) => {
@@ -220,6 +229,7 @@ app.get('/api/start_vr_exercise',  (req, res) => {
   });
 });
 
+//EndPoint to save the information about user result in database
 app.post('/api/finish_vr_exercise',  (req, res) => {
   var pin = req.body.PIN; 
   var autograde = req.body.autograde; 
@@ -256,48 +266,7 @@ app.post('/api/finish_vr_exercise',  (req, res) => {
   });
 });
 
-// async function get_modified_course_list(course_list){
-//   var new_course_list = [];
-//   for (var j = 0; j < course_list.length; j++) {
-//     get_teachers_names(course.subscribers.teachers).then(val => {
-//       var course = {title : course_list[j].title, description : course_list[j].description, teachers : val};
-//       new_course_list.push(course);
-//     });
-//   }
-//   return course_list;
-// }
-
-// async function get_teachers_names(course_list) {
-//   var new_course_list = course_list.map( async function(course) {
-//       var teachers_names = [];
-//       var teachers = await users.find({ "id": { $in: course.subscribers.teachers } }).toArray();
-//       if (teachers == null) {
-//         console.log("Users not found");
-//       } else {
-//         for (var i = 0; i < teachers.length; i++) {
-//           teachers_names.push(teachers[i].name);
-//         }
-//         course.subscribers.teachers = teachers_names;
-//       }
-//     });
-//     return new_course_list;
-  // for (let j = 0; j < course_list.length; j++) {
-  //   var teachers_names = [];
-  //   var teachers = await users.find({ "id": { $in: course_list[j].subscribers.teachers } }).toArray();
-  //   if (teachers == null) {
-  //     console.log("Users not found");
-  //   } else {
-  //     for (var i = 0; i < teachers.length; i++) {
-  //       teachers_names.push(teachers[i].name);
-  //     }
-
-  //   }
-  // }
-  // return new_course_list;
-// };
-
-
-
+//function to get the token for the user
 function get_token(user) {
   if (user.token != '') {
     if (Date.now() < user.expiration_time.getTime()) {
@@ -314,6 +283,7 @@ function get_token(user) {
   return new_token;
 };
 
+//function to get the pin for the user
 async function get_pin(VRtaskID, user) {
   var query;
   var pin = "";
@@ -337,6 +307,7 @@ async function get_pin(VRtaskID, user) {
    return pin;
 };
 
+//function to get a string of four numbers
 function create_pin() {
   var pin = "";
   for (let index = 0; index < 4; index++) {
